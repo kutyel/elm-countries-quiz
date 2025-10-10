@@ -7,4 +7,4 @@
 - [x] Add `elm-review`
 - [x] Add `tailwindcss`
 - [x] Add NixCI
-- [] Deploy to Netlify!
+- [ ] Deploy to Netlify!

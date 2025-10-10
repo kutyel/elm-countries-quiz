@@ -6,15 +6,28 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Events.Extra as Events
+import Process
 import Random
 import Random.List
 import Svg
 import Svg.Attributes as SvgAttr
+import Task
+import Toast
+
+
+emptyTray : Toast.Tray Toast
+emptyTray =
+    Toast.tray
 
 
 main : Program () Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = always Sub.none }
+
+
+type Toast
+    = Red String
+    | Green
 
 
 type alias GameState =
@@ -23,7 +36,7 @@ type alias GameState =
 
 type Model
     = Idle
-    | Playing Country (List Country) String GameState
+    | Playing Country (List Country) String GameState (Toast.Tray Toast)
     | Finished GameState
 
 
@@ -35,19 +48,22 @@ init () =
 type Msg
     = Start
     | Restart
-    | RandomCountry GameState ( Maybe Country, List Country )
+    | ToastMsg Toast.Msg
+    | AddToast Toast
     | OnInput Country (List Country) GameState String
     | CheckAnswer Country (List Country) GameState String
+    | RandomCountry GameState ( Maybe Country, List Country )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         OnInput country countries state str ->
-            ( Playing country countries str state, Cmd.none )
+            ( Playing country countries str state emptyTray, Cmd.none )
 
         Start ->
             let
+                countryGenerator : Random.Generator ( Maybe Country, List Country )
                 countryGenerator =
                     Random.List.choose Countries.all
             in
@@ -56,8 +72,38 @@ update msg model =
         Restart ->
             ( Idle, Cmd.none )
 
+        AddToast content ->
+            case model of
+                Idle ->
+                    ( model, Cmd.none )
+
+                Finished _ ->
+                    ( model, Cmd.none )
+
+                Playing c cs input state oldTray ->
+                    let
+                        ( tray, tmesg ) =
+                            Toast.add oldTray (Toast.expireIn 1000 content)
+                    in
+                    ( Playing c cs input state tray, Cmd.map ToastMsg tmesg )
+
+        ToastMsg tmsg ->
+            case model of
+                Idle ->
+                    ( model, Cmd.none )
+
+                Finished _ ->
+                    ( model, Cmd.none )
+
+                Playing c cs input state oldTray ->
+                    let
+                        ( tray, newTmesg ) =
+                            Toast.update tmsg oldTray
+                    in
+                    ( Playing c cs input state tray, Cmd.map ToastMsg newTmesg )
+
         RandomCountry state ( Just country, remainingCountries ) ->
-            ( Playing country remainingCountries "" state, Cmd.none )
+            ( Playing country remainingCountries "" state emptyTray, Cmd.none )
 
         RandomCountry result ( Nothing, [] ) ->
             ( Finished result, Cmd.none )
@@ -67,17 +113,90 @@ update msg model =
 
         CheckAnswer country countries state answer ->
             let
+                answerWasCorrect : Bool
+                answerWasCorrect =
+                    String.contains (String.toLower answer) (String.toLower country.name)
+
+                countryGenerator : Random.Generator ( Maybe Country, List Country )
                 countryGenerator =
                     Random.List.choose countries
 
+                updatedGameState : GameState
                 updatedGameState =
-                    if String.contains (String.toLower answer) (String.toLower country.name) then
+                    if answerWasCorrect then
                         { state | correct = state.correct + 1 }
 
                     else
                         { state | failed = state.failed + 1 }
             in
-            ( model, Random.generate (RandomCountry updatedGameState) countryGenerator )
+            ( model
+            , Cmd.batch
+                [ Random.generate (RandomCountry updatedGameState) countryGenerator
+                , if answerWasCorrect then
+                    delay 0 (AddToast Green)
+
+                  else
+                    delay 0 (AddToast <| Red country.name)
+                ]
+            )
+
+
+delay : Int -> msg -> Cmd msg
+delay ms msg =
+    Task.perform (always msg) (Process.sleep <| toFloat ms)
+
+
+viewToast : List (Html.Attribute Msg) -> Toast.Info Toast -> Html Msg
+viewToast attributes toast =
+    Html.div
+        attributes
+    <|
+        case toast.content of
+            Red correct ->
+                [ Html.div
+                    [ Attr.attribute "role" "alert"
+                    , Attr.class "alert alert-error"
+                    ]
+                    [ Svg.svg
+                        [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current"
+                        , SvgAttr.fill "none"
+                        , SvgAttr.viewBox "0 0 24 24"
+                        ]
+                        [ Svg.path
+                            [ SvgAttr.strokeLinecap "round"
+                            , SvgAttr.strokeLinejoin "round"
+                            , SvgAttr.strokeWidth "2"
+                            , SvgAttr.d "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            ]
+                            []
+                        ]
+                    , Html.span []
+                        [ Html.text <| "Mistake! The country was: " ++ correct ]
+                    ]
+                ]
+
+            Green ->
+                [ Html.div
+                    [ Attr.attribute "role" "alert"
+                    , Attr.class "alert alert-success"
+                    ]
+                    [ Svg.svg
+                        [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current"
+                        , SvgAttr.fill "none"
+                        , SvgAttr.viewBox "0 0 24 24"
+                        ]
+                        [ Svg.path
+                            [ SvgAttr.strokeLinecap "round"
+                            , SvgAttr.strokeLinejoin "round"
+                            , SvgAttr.strokeWidth "2"
+                            , SvgAttr.d "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            ]
+                            []
+                        ]
+                    , Html.span []
+                        [ Html.text "Correct!" ]
+                    ]
+                ]
 
 
 view : Model -> Html Msg
@@ -119,51 +238,11 @@ view model =
                         [ Html.text "Start!" ]
                     ]
 
-                Playing country countries input gameState ->
+                Playing country countries input gameState tray ->
                     [ Html.div
-                        -- FIXME: make toats appear/disappear properly
                         [ Attr.class "toast toast-top toast-start"
                         ]
-                        [ Html.div
-                            [ Attr.attribute "role" "alert"
-                            , Attr.class "alert alert-error"
-                            ]
-                            [ Svg.svg
-                                [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current"
-                                , SvgAttr.fill "none"
-                                , SvgAttr.viewBox "0 0 24 24"
-                                ]
-                                [ Svg.path
-                                    [ SvgAttr.strokeLinecap "round"
-                                    , SvgAttr.strokeLinejoin "round"
-                                    , SvgAttr.strokeWidth "2"
-                                    , SvgAttr.d "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    ]
-                                    []
-                                ]
-                            , Html.span []
-                                [ Html.text <| "Mistake! The country was: " ++ country.name ]
-                            ]
-                        , Html.div
-                            [ Attr.attribute "role" "alert"
-                            , Attr.class "alert alert-success"
-                            ]
-                            [ Svg.svg
-                                [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current"
-                                , SvgAttr.fill "none"
-                                , SvgAttr.viewBox "0 0 24 24"
-                                ]
-                                [ Svg.path
-                                    [ SvgAttr.strokeLinecap "round"
-                                    , SvgAttr.strokeLinejoin "round"
-                                    , SvgAttr.strokeWidth "2"
-                                    , SvgAttr.d "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    ]
-                                    []
-                                ]
-                            , Html.span []
-                                [ Html.text "Correct!" ]
-                            ]
+                        [ Toast.render viewToast tray (Toast.config ToastMsg)
                         ]
                     , Html.div [ Attr.class "flex flex-col" ]
                         [ Html.div
@@ -180,7 +259,7 @@ view model =
                             ]
                         , Html.input
                             [ Attr.type_ "text"
-                            , Attr.placeholder "Type here"
+                            , Attr.placeholder "Country name..."
                             , Attr.class "input w-full"
                             , Events.onInput <| OnInput country countries gameState
                             , Attr.value input
