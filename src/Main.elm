@@ -115,7 +115,10 @@ update msg model =
             let
                 answerWasCorrect : Bool
                 answerWasCorrect =
-                    String.contains (String.toLower answer) (String.toLower country.name)
+                    (not <| String.isEmpty answer)
+                        && String.contains
+                            (String.toLower <| String.trim answer)
+                            (String.toLower country.name)
 
                 countryGenerator : Random.Generator ( Maybe Country, List Country )
                 countryGenerator =
