@@ -228,7 +228,7 @@ view model =
                     ]
                 ]
             ]
-        , Html.div [ Attr.class "h-full grid place-items-center" ] <|
+        , Html.div [ Attr.class "h-2/3 grid place-items-center" ] <|
             case model of
                 Idle ->
                     [ Html.button
@@ -240,7 +240,7 @@ view model =
 
                 Playing country countries input gameState tray ->
                     [ Html.div
-                        [ Attr.class "toast toast-top toast-start"
+                        [ Attr.class "toast toast-center toast-middle"
                         ]
                         [ Toast.render viewToast tray (Toast.config ToastMsg)
                         ]
