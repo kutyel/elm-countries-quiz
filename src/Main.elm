@@ -7,8 +7,8 @@ import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Events.Extra as Events
 import Process
-import Random
-import Random.List
+import Random exposing (Generator)
+import Random.List exposing (shuffle)
 import Svg
 import Svg.Attributes as SvgAttr
 import Task
@@ -30,14 +30,22 @@ type Toast
     | Green
 
 
-type alias GameState =
+type alias Score =
     { correct : Int, failed : Int }
+
+
+type alias GameState =
+    { currentCountry : Country
+    , remainingCountries : List Country
+    , score : Score
+    , guess : String
+    }
 
 
 type Model
     = Idle
-    | Playing Country (List Country) String GameState (Toast.Tray Toast)
-    | Finished GameState
+    | Playing GameState (Toast.Tray Toast)
+    | Finished Score
 
 
 init : () -> ( Model, Cmd msg )
@@ -50,97 +58,88 @@ type Msg
     | Restart
     | ToastMsg Toast.Msg
     | AddToast Toast
-    | OnInput Country (List Country) GameState String
-    | CheckAnswer Country (List Country) GameState String
-    | RandomCountry GameState ( Maybe Country, List Country )
+    | OnInput GameState
+    | CheckAnswer GameState
+    | RandomCountry Score (List Country)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        OnInput country countries state str ->
-            ( Playing country countries str state emptyTray, Cmd.none )
+        OnInput gameState ->
+            ( Playing gameState emptyTray, Cmd.none )
 
         Start ->
             let
-                countryGenerator : Random.Generator ( Maybe Country, List Country )
+                countryGenerator : Generator (List Country)
                 countryGenerator =
-                    Random.List.choose Countries.all
+                    -- the whole game revolves around this!
+                    shuffle Countries.all
             in
-            ( model, Random.generate (RandomCountry { correct = 0, failed = 0 }) countryGenerator )
+            ( model, Random.generate (RandomCountry (Score 0 0)) countryGenerator )
 
         Restart ->
             ( Idle, Cmd.none )
 
         AddToast content ->
             case model of
-                Idle ->
-                    ( model, Cmd.none )
-
-                Finished _ ->
-                    ( model, Cmd.none )
-
-                Playing c cs input state oldTray ->
+                Playing state oldTray ->
                     let
                         ( tray, tmesg ) =
-                            Toast.add oldTray (Toast.expireIn 1000 content)
+                            Toast.add oldTray <| Toast.expireIn 1000 content
                     in
-                    ( Playing c cs input state tray, Cmd.map ToastMsg tmesg )
+                    ( Playing state tray, Cmd.map ToastMsg tmesg )
+
+                _ ->
+                    ( model, Cmd.none )
 
         ToastMsg tmsg ->
             case model of
-                Idle ->
-                    ( model, Cmd.none )
-
-                Finished _ ->
-                    ( model, Cmd.none )
-
-                Playing c cs input state oldTray ->
+                Playing state oldTray ->
                     let
                         ( tray, newTmesg ) =
                             Toast.update tmsg oldTray
                     in
-                    ( Playing c cs input state tray, Cmd.map ToastMsg newTmesg )
+                    ( Playing state tray, Cmd.map ToastMsg newTmesg )
 
-        RandomCountry state ( Just country, remainingCountries ) ->
-            ( Playing country remainingCountries "" state emptyTray, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
 
-        RandomCountry result ( Nothing, [] ) ->
-            ( Finished result, Cmd.none )
+        RandomCountry score (country :: remainingCountries) ->
+            ( Playing (GameState country remainingCountries score "") emptyTray, Cmd.none )
 
-        RandomCountry _ ( Nothing, _ ) ->
-            ( model, Cmd.none )
+        RandomCountry state [] ->
+            ( Finished state, Cmd.none )
 
-        CheckAnswer country countries state answer ->
+        CheckAnswer { currentCountry, remainingCountries, score, guess } ->
             let
                 answerWasCorrect : Bool
                 answerWasCorrect =
-                    (not <| String.isEmpty answer)
+                    (not <| String.isEmpty guess)
                         && String.contains
-                            (String.toLower <| String.trim answer)
-                            (String.toLower country.name)
+                            (String.toLower <| String.trim guess)
+                            (String.toLower currentCountry.name)
 
-                countryGenerator : Random.Generator ( Maybe Country, List Country )
-                countryGenerator =
-                    Random.List.choose countries
-
-                updatedGameState : GameState
-                updatedGameState =
+                updatedGameScore : Score
+                updatedGameScore =
                     if answerWasCorrect then
-                        { state | correct = state.correct + 1 }
+                        { score | correct = score.correct + 1 }
 
                     else
-                        { state | failed = state.failed + 1 }
+                        { score | failed = score.failed + 1 }
             in
-            ( model
-            , Cmd.batch
-                [ Random.generate (RandomCountry updatedGameState) countryGenerator
-                , if answerWasCorrect then
-                    delay 0 (AddToast Green)
+            ( case remainingCountries of
+                c :: cs ->
+                    Playing (GameState c cs updatedGameScore "") emptyTray
 
-                  else
-                    delay 0 (AddToast <| Red country.name)
-                ]
+                [] ->
+                    -- we run out of countries, the game is finished!
+                    Finished updatedGameScore
+            , if answerWasCorrect then
+                delay 0 (AddToast Green)
+
+              else
+                delay 0 (AddToast <| Red currentCountry.name)
             )
 
 
@@ -241,32 +240,27 @@ view model =
                         [ Html.text "Start!" ]
                     ]
 
-                Playing country countries input gameState tray ->
+                Playing ({ currentCountry, guess } as gameState) tray ->
                     [ Html.div
-                        [ Attr.class "toast toast-top toast-center"
-                        ]
-                        [ Toast.render viewToast tray (Toast.config ToastMsg)
-                        ]
+                        [ Attr.class "toast toast-top toast-center" ]
+                        [ Toast.render viewToast tray (Toast.config ToastMsg) ]
                     , Html.div [ Attr.class "flex flex-col" ]
                         [ Html.div
-                            [ Attr.class "card w-96 bg-base-100 card-md shadow-sm"
-                            ]
+                            [ Attr.class "card w-96 bg-base-100 card-md shadow-sm" ]
                             [ Html.div
-                                [ Attr.class "card-body flex items-center justify-center"
-                                ]
+                                [ Attr.class "card-body flex items-center justify-center" ]
                                 [ Html.h2
-                                    [ Attr.class "card-title text-9xl text-center"
-                                    ]
-                                    [ Html.text <| country.flag ]
+                                    [ Attr.class "card-title text-9xl text-center" ]
+                                    [ Html.text <| currentCountry.flag ]
                                 ]
                             ]
                         , Html.input
                             [ Attr.type_ "text"
                             , Attr.placeholder "Country name..."
                             , Attr.class "input w-full"
-                            , Events.onInput <| OnInput country countries gameState
-                            , Attr.value input
-                            , Events.onEnter <| CheckAnswer country countries gameState input
+                            , Events.onInput <| \s -> OnInput { gameState | guess = s }
+                            , Attr.value guess
+                            , Events.onEnter <| CheckAnswer gameState
                             ]
                             []
                         ]
