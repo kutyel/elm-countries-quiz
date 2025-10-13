@@ -227,6 +227,16 @@ viewToast attributes toast =
                 ]
 
 
+isPlaying : Model -> Bool
+isPlaying model =
+    case model of
+        Playing _ _ ->
+            True
+
+        _ ->
+            False
+
+
 view : Model -> Html Msg
 view model =
     Html.div [ Attr.class "min-h-screen flex flex-col bg-base-200" ]
@@ -241,14 +251,18 @@ view model =
                     [ Html.text "🌍 Countries Quiz" ]
                 ]
             , Html.div
-                [ Attr.class "flex-none"
-                ]
-                [ Html.button
-                    [ Attr.class "btn btn-ghost btn-sm md:btn-md"
-                    , Events.onClick Restart
+                [ Attr.class "flex-none" ]
+                (if isPlaying model then
+                    [ Html.button
+                        [ Attr.class "btn btn-ghost btn-sm md:btn-md"
+                        , Events.onClick Restart
+                        ]
+                        [ Html.text "🔄 Restart" ]
                     ]
-                    [ Html.text "🔄 Restart" ]
-                ]
+
+                 else
+                    []
+                )
             ]
         , Html.div [ Attr.class "flex-1 flex items-center justify-center p-4 md:p-8" ] <|
             case model of
