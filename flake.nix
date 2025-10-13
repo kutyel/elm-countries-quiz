@@ -25,6 +25,7 @@
           ];
 
           shellHook = ''
+            elm-review
             echo "Elm development environment loaded"
             echo "Run 'pnpm install' to install JavaScript dependencies"
             echo "Run 'pnpm start' to start the development server"
