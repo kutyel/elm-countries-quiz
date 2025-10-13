@@ -42,6 +42,12 @@ type alias GameState =
     }
 
 
+type GameMode
+    = All
+    | Random50
+    | Random100
+
+
 type Model
     = Idle
     | Playing GameState (Toast.Tray Toast)
@@ -54,7 +60,7 @@ init () =
 
 
 type Msg
-    = Start
+    = Start GameMode
     | Restart
     | ToastMsg Toast.Msg
     | AddToast Toast
@@ -69,12 +75,24 @@ update msg model =
         OnInput gameState ->
             ( Playing gameState emptyTray, Cmd.none )
 
-        Start ->
+        Start mode ->
             let
                 countryGenerator : Generator (List Country)
                 countryGenerator =
                     -- the whole game revolves around this!
                     shuffle Countries.all
+                        |> Random.map
+                            (\countries ->
+                                case mode of
+                                    All ->
+                                        countries
+
+                                    Random50 ->
+                                        List.take 50 countries
+
+                                    Random100 ->
+                                        List.take 100 countries
+                            )
             in
             ( model, Random.generate (RandomCountry (Score 0 0)) countryGenerator )
 
@@ -203,28 +221,23 @@ viewToast attributes toast =
 
 view : Model -> Html Msg
 view model =
-    Html.div [ Attr.class "h-screen" ]
+    Html.div
+        [ Attr.class "h-screen" ]
         [ Html.div
-            [ Attr.class "navbar bg-base-100 shadow-sm"
-            ]
+            [ Attr.class "navbar bg-base-100 shadow-sm" ]
             [ Html.div
-                [ Attr.class "flex-1"
-                ]
+                [ Attr.class "flex-1" ]
                 [ Html.a
-                    [ Attr.class "btn btn-ghost text-xl"
-                    ]
+                    [ Attr.class "btn btn-ghost text-xl" ]
                     [ Html.text "elm-countries-quiz" ]
                 ]
             , Html.div
-                [ Attr.class "flex-none"
-                ]
+                [ Attr.class "flex-none" ]
                 [ Html.ul
-                    [ Attr.class "menu menu-horizontal px-1"
-                    ]
+                    [ Attr.class "menu menu-horizontal px-1" ]
                     [ Html.li []
                         [ Html.a
-                            [ Events.onClick Restart
-                            ]
+                            [ Events.onClick Restart ]
                             [ Html.text "Restart" ]
                         ]
                     ]
@@ -235,9 +248,19 @@ view model =
                 Idle ->
                     [ Html.button
                         [ Attr.class "btn btn-primary btn-lg"
-                        , Events.onClick Start
+                        , Events.onClick <| Start All
                         ]
                         [ Html.text "Start!" ]
+                    , Html.button
+                        [ Attr.class "btn btn-secondary btn-lg"
+                        , Events.onClick <| Start Random50
+                        ]
+                        [ Html.text "Random 50" ]
+                    , Html.button
+                        [ Attr.class "btn btn-accent btn-lg"
+                        , Events.onClick <| Start Random100
+                        ]
+                        [ Html.text "Random 100" ]
                     ]
 
                 Playing ({ currentCountry, guess } as gameState) tray ->
@@ -271,11 +294,9 @@ view model =
                         [ Attr.class "card w-96 bg-base-100 card-md shadow-sm"
                         ]
                         [ Html.div
-                            [ Attr.class "card-body flex items-center justify-center"
-                            ]
+                            [ Attr.class "card-body flex items-center justify-center" ]
                             [ Html.h2
-                                [ Attr.class "card-title text-3xl text-center"
-                                ]
+                                [ Attr.class "card-title text-3xl text-center" ]
                                 [ Html.text "Congratulations! 🎉🎉🎉" ]
                             , Html.p
                                 [ Attr.class "text-lime-500 text-xl text-center" ]
