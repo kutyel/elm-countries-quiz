@@ -143,38 +143,28 @@ update msg model =
                             (String.toLower <| String.trim guess)
                             (String.toLower currentCountry.name)
 
-                newStreak : Int
-                newStreak =
-                    if answerWasCorrect then
-                        score.streak + 1
-                    else
-                        0
-
                 updatedGameScore : Score
                 updatedGameScore =
                     if answerWasCorrect then
-                        { score 
+                        { score
                             | correct = score.correct + 1
-                            , streak = newStreak
-                            , maxStreak = max newStreak score.maxStreak
+                            , streak = score.streak + 1
+                            , maxStreak = max (score.streak + 1) score.maxStreak
                         }
 
                     else
-                        { score 
+                        { score
                             | failed = score.failed + 1
                             , streak = 0
                         }
-
-                updatedGuessedCountries : List Country
-                updatedGuessedCountries =
-                    if answerWasCorrect then
-                        currentCountry :: guessedCountries
-                    else
-                        guessedCountries
             in
             ( case remainingCountries of
                 c :: cs ->
-                    Playing (GameState c cs updatedGuessedCountries updatedGameScore "") emptyTray
+                    if answerWasCorrect then
+                        Playing (GameState c cs (currentCountry :: guessedCountries) updatedGameScore "") emptyTray
+
+                    else
+                        Playing (GameState c cs guessedCountries updatedGameScore "") emptyTray
 
                 [] ->
                     -- we run out of countries, the game is finished!
@@ -327,38 +317,54 @@ view model =
                         , Html.div [ Attr.class "stats stats-vertical sm:stats-horizontal bg-base-100 shadow-xl w-full md:order-3" ]
                             [ Html.div [ Attr.class "stat place-items-center py-2" ]
                                 [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Correct" ]
-                                , Html.div [ Attr.class "stat-value text-success text-xl md:text-4xl transition-all duration-300" ] 
+                                , Html.div [ Attr.class "stat-value text-success text-xl md:text-4xl transition-all duration-300" ]
                                     [ Html.text <| "✅ " ++ String.fromInt score.correct ]
                                 ]
                             , Html.div [ Attr.class "stat place-items-center py-2" ]
                                 [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Incorrect" ]
-                                , Html.div [ Attr.class "stat-value text-error text-xl md:text-4xl transition-all duration-300" ] 
+                                , Html.div [ Attr.class "stat-value text-error text-xl md:text-4xl transition-all duration-300" ]
                                     [ Html.text <| "❌ " ++ String.fromInt score.failed ]
                                 ]
                             , Html.div [ Attr.class "stat place-items-center py-2" ]
                                 [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Streak" ]
-                                , Html.div 
+                                , Html.div
                                     [ Attr.class <|
                                         "stat-value text-primary text-xl md:text-4xl transition-all duration-300 "
-                                        ++ (if score.streak > 0 then "animate-pulse scale-110" else "")
-                                    ] 
-                                    [ Html.text <| 
-                                        (if score.streak > 2 then "🔥 " else "") 
-                                        ++ String.fromInt score.streak 
+                                            ++ (if score.streak > 0 then
+                                                    "animate-pulse scale-110"
+
+                                                else
+                                                    ""
+                                               )
+                                    ]
+                                    [ Html.text <|
+                                        (if score.streak > 2 then
+                                            "🔥 "
+
+                                         else
+                                            ""
+                                        )
+                                            ++ String.fromInt score.streak
                                     ]
                                 ]
                             , Html.div [ Attr.class "stat place-items-center py-2" ]
                                 [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Best" ]
-                                , Html.div 
-                                    [ Attr.class "stat-value text-secondary text-xl md:text-4xl transition-all duration-500" ] 
-                                    [ Html.text <| 
-                                        (if score.maxStreak > 2 then "🔥 " else "") 
-                                        ++ String.fromInt score.maxStreak 
+                                , Html.div
+                                    [ Attr.class "stat-value text-secondary text-xl md:text-4xl transition-all duration-500" ]
+                                    [ Html.text <|
+                                        (if score.maxStreak > 2 then
+                                            "🔥 "
+
+                                         else
+                                            ""
+                                        )
+                                            ++ String.fromInt score.maxStreak
                                     ]
                                 ]
                             ]
                         , if List.isEmpty guessedCountries then
                             Html.text ""
+
                           else
                             Html.div [ Attr.class "card bg-base-100 shadow-lg animate-in fade-in duration-500 md:order-4" ]
                                 [ Html.div [ Attr.class "card-body p-4" ]
@@ -368,7 +374,7 @@ view model =
                                         (List.map
                                             (\country ->
                                                 Html.span
-                                                    [ Attr.class "text-3xl md:text-4xl line-through opacity-50 hover:opacity-80 transition-opacity duration-200 animate-in zoom-in duration-300"
+                                                    [ Attr.class "text-3xl md:text-4xl line-through opacity-50 hover:opacity-80 transition-opacity animate-in zoom-in duration-300"
                                                     , Attr.title country.name
                                                     ]
                                                     [ Html.text country.flag ]
