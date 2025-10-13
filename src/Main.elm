@@ -47,6 +47,12 @@ type alias GameState =
     }
 
 
+type GameMode
+    = All
+    | Random50
+    | Random100
+
+
 type Model
     = Idle
     | Playing GameState (Toast.Tray Toast)
@@ -59,7 +65,7 @@ init () =
 
 
 type Msg
-    = Start
+    = Start GameMode
     | Restart
     | ToastMsg Toast.Msg
     | AddToast Toast
@@ -74,12 +80,24 @@ update msg model =
         OnInput gameState ->
             ( Playing gameState emptyTray, Cmd.none )
 
-        Start ->
+        Start mode ->
             let
                 countryGenerator : Generator (List Country)
                 countryGenerator =
                     -- the whole game revolves around this!
                     shuffle Countries.all
+                        |> Random.map
+                            (\countries ->
+                                case mode of
+                                    All ->
+                                        countries
+
+                                    Random50 ->
+                                        List.take 50 countries
+
+                                    Random100 ->
+                                        List.take 100 countries
+                            )
             in
             ( model, Random.generate (RandomCountry (Score 0 0 0 0)) countryGenerator )
 
@@ -234,8 +252,7 @@ view model =
             [ Attr.class "navbar bg-base-100 shadow-md sticky top-0 z-50"
             ]
             [ Html.div
-                [ Attr.class "flex-1"
-                ]
+                [ Attr.class "flex-1" ]
                 [ Html.a
                     [ Attr.class "btn btn-ghost text-lg md:text-xl normal-case"
                     ]
@@ -256,14 +273,26 @@ view model =
                 Idle ->
                     [ Html.div [ Attr.class "text-center space-y-6 animate-in fade-in zoom-in duration-700" ]
                         [ Html.h1 [ Attr.class "text-4xl md:text-6xl font-bold mb-4" ]
-                            [ Html.text "Flag Quiz" ]
+                            [ Html.text "🏌️ Flag Quiz" ]
                         , Html.p [ Attr.class "text-lg md:text-xl text-base-content/70 mb-8" ]
                             [ Html.text "Can you guess all the countries?" ]
-                        , Html.button
-                            [ Attr.class "btn btn-primary btn-lg btn-wide text-lg"
-                            , Events.onClick Start
+                        , Html.div [ Attr.class "flex flex-col gap-3" ]
+                            [ Html.button
+                                [ Attr.class "btn btn-primary btn-lg btn-wide text-lg"
+                                , Events.onClick <| Start All
+                                ]
+                                [ Html.text "🚀 All Countries" ]
+                            , Html.button
+                                [ Attr.class "btn btn-secondary btn-lg btn-wide text-lg"
+                                , Events.onClick <| Start Random50
+                                ]
+                                [ Html.text "🎲 Random 50" ]
+                            , Html.button
+                                [ Attr.class "btn btn-accent btn-lg btn-wide text-lg"
+                                , Events.onClick <| Start Random100
+                                ]
+                                [ Html.text "🎯 Random 100" ]
                             ]
-                            [ Html.text "🚀 Start Game!" ]
                         ]
                     ]
 
