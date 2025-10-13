@@ -273,9 +273,9 @@ view model =
                 Idle ->
                     [ Html.div [ Attr.class "text-center space-y-6 animate-in fade-in zoom-in duration-700" ]
                         [ Html.h1 [ Attr.class "text-4xl md:text-6xl font-bold mb-4" ]
-                            [ Html.text "🏌️ Flag Quiz" ]
+                            [ Html.text "Flag Quiz" ]
                         , Html.p [ Attr.class "text-lg md:text-xl text-base-content/70 mb-8" ]
-                            [ Html.text "Can you guess all the countries?" ]
+                            [ Html.text " 🧠 Can you guess all the countries? 🌍" ]
                         , Html.div [ Attr.class "flex flex-col gap-3" ]
                             [ Html.button
                                 [ Attr.class "btn btn-primary btn-lg btn-wide text-lg"
