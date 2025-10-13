@@ -6,7 +6,6 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Events.Extra as Events
-import Process
 import Random exposing (Generator)
 import Random.List exposing (shuffle)
 import Svg
@@ -170,23 +169,16 @@ update msg model =
                     -- we run out of countries, the game is finished!
                     Finished updatedGameScore
             , if answerWasCorrect then
-                delay 0 (AddToast Green)
+                Task.perform identity <| Task.succeed (AddToast Green)
 
               else
-                delay 0 (AddToast <| Red currentCountry.name)
+                Task.perform identity <| Task.succeed (AddToast <| Red currentCountry.name)
             )
-
-
-delay : Int -> msg -> Cmd msg
-delay ms msg =
-    Task.perform (always msg) (Process.sleep <| toFloat ms)
 
 
 viewToast : List (Html.Attribute Msg) -> Toast.Info Toast -> Html Msg
 viewToast attributes toast =
-    Html.div
-        attributes
-    <|
+    Html.div attributes <|
         case toast.content of
             Red correct ->
                 [ Html.div
@@ -291,8 +283,7 @@ view model =
                         [ Attr.class "toast toast-top toast-center z-50" ]
                         [ Toast.render viewToast tray (Toast.config ToastMsg) ]
                     , Html.div [ Attr.class "w-full max-w-4xl mx-auto flex flex-col gap-4 md:gap-6" ]
-                        [ -- Input field first (sticky on mobile)
-                          Html.div [ Attr.class "sticky top-16 z-40 bg-base-200 pb-2 md:relative md:top-0 md:order-2" ]
+                        [ Html.div [ Attr.class "sticky top-16 z-40 bg-base-200 pb-2 md:relative md:top-0 md:order-2" ]
                             [ Html.input
                                 [ Attr.type_ "text"
                                 , Attr.placeholder "Type country name..."
