@@ -258,7 +258,7 @@ view model =
                             [ Html.text "Flag Quiz" ]
                         , Html.p [ Attr.class "text-lg md:text-xl text-base-content/70 mb-8" ]
                             [ Html.text " 🧠 Can you guess all the countries? 🌍" ]
-                        , Html.div [ Attr.class "flex flex-col gap-3" ]
+                        , Html.div [ Attr.class "flex flex-col gap-3 items-center" ]
                             [ Html.button
                                 [ Attr.class "btn btn-primary btn-lg btn-wide text-lg"
                                 , Events.onClick <| Start All
