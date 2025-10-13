@@ -31,12 +31,17 @@ type Toast
 
 
 type alias Score =
-    { correct : Int, failed : Int }
+    { correct : Int
+    , failed : Int
+    , streak : Int
+    , maxStreak : Int
+    }
 
 
 type alias GameState =
     { currentCountry : Country
     , remainingCountries : List Country
+    , guessedCountries : List Country
     , score : Score
     , guess : String
     }
@@ -76,7 +81,7 @@ update msg model =
                     -- the whole game revolves around this!
                     shuffle Countries.all
             in
-            ( model, Random.generate (RandomCountry (Score 0 0)) countryGenerator )
+            ( model, Random.generate (RandomCountry (Score 0 0 0 0)) countryGenerator )
 
         Restart ->
             ( Idle, Cmd.none )
@@ -106,12 +111,12 @@ update msg model =
                     ( model, Cmd.none )
 
         RandomCountry score (country :: remainingCountries) ->
-            ( Playing (GameState country remainingCountries score "") emptyTray, Cmd.none )
+            ( Playing (GameState country remainingCountries [] score "") emptyTray, Cmd.none )
 
         RandomCountry state [] ->
             ( Finished state, Cmd.none )
 
-        CheckAnswer { currentCountry, remainingCountries, score, guess } ->
+        CheckAnswer { currentCountry, remainingCountries, guessedCountries, score, guess } ->
             let
                 answerWasCorrect : Bool
                 answerWasCorrect =
@@ -120,17 +125,38 @@ update msg model =
                             (String.toLower <| String.trim guess)
                             (String.toLower currentCountry.name)
 
+                newStreak : Int
+                newStreak =
+                    if answerWasCorrect then
+                        score.streak + 1
+                    else
+                        0
+
                 updatedGameScore : Score
                 updatedGameScore =
                     if answerWasCorrect then
-                        { score | correct = score.correct + 1 }
+                        { score 
+                            | correct = score.correct + 1
+                            , streak = newStreak
+                            , maxStreak = max newStreak score.maxStreak
+                        }
 
                     else
-                        { score | failed = score.failed + 1 }
+                        { score 
+                            | failed = score.failed + 1
+                            , streak = 0
+                        }
+
+                updatedGuessedCountries : List Country
+                updatedGuessedCountries =
+                    if answerWasCorrect then
+                        currentCountry :: guessedCountries
+                    else
+                        guessedCountries
             in
             ( case remainingCountries of
                 c :: cs ->
-                    Playing (GameState c cs updatedGameScore "") emptyTray
+                    Playing (GameState c cs updatedGuessedCountries updatedGameScore "") emptyTray
 
                 [] ->
                     -- we run out of countries, the game is finished!
@@ -157,10 +183,10 @@ viewToast attributes toast =
             Red correct ->
                 [ Html.div
                     [ Attr.attribute "role" "alert"
-                    , Attr.class "alert alert-error"
+                    , Attr.class "alert alert-error animate-in slide-in-from-top duration-500 animate-out slide-out-to-top"
                     ]
                     [ Svg.svg
-                        [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current"
+                        [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current animate-pulse"
                         , SvgAttr.fill "none"
                         , SvgAttr.viewBox "0 0 24 24"
                         ]
@@ -172,7 +198,7 @@ viewToast attributes toast =
                             ]
                             []
                         ]
-                    , Html.span []
+                    , Html.span [ Attr.class "animate-in fade-in duration-300" ]
                         [ Html.text <| "Mistake! The country was: " ++ correct ]
                     ]
                 ]
@@ -180,10 +206,10 @@ viewToast attributes toast =
             Green ->
                 [ Html.div
                     [ Attr.attribute "role" "alert"
-                    , Attr.class "alert alert-success"
+                    , Attr.class "alert alert-success animate-in slide-in-from-top duration-500 animate-out slide-out-to-top"
                     ]
                     [ Svg.svg
-                        [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current"
+                        [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current animate-bounce"
                         , SvgAttr.fill "none"
                         , SvgAttr.viewBox "0 0 24 24"
                         ]
@@ -195,7 +221,7 @@ viewToast attributes toast =
                             ]
                             []
                         ]
-                    , Html.span []
+                    , Html.span [ Attr.class "animate-in fade-in duration-300" ]
                         [ Html.text "Correct!" ]
                     ]
                 ]
@@ -203,86 +229,166 @@ viewToast attributes toast =
 
 view : Model -> Html Msg
 view model =
-    Html.div [ Attr.class "h-screen" ]
+    Html.div [ Attr.class "min-h-screen flex flex-col bg-base-200" ]
         [ Html.div
-            [ Attr.class "navbar bg-base-100 shadow-sm"
+            [ Attr.class "navbar bg-base-100 shadow-md sticky top-0 z-50"
             ]
             [ Html.div
                 [ Attr.class "flex-1"
                 ]
                 [ Html.a
-                    [ Attr.class "btn btn-ghost text-xl"
+                    [ Attr.class "btn btn-ghost text-lg md:text-xl normal-case"
                     ]
-                    [ Html.text "elm-countries-quiz" ]
+                    [ Html.text "🌍 Countries Quiz" ]
                 ]
             , Html.div
                 [ Attr.class "flex-none"
                 ]
-                [ Html.ul
-                    [ Attr.class "menu menu-horizontal px-1"
+                [ Html.button
+                    [ Attr.class "btn btn-ghost btn-sm md:btn-md"
+                    , Events.onClick Restart
                     ]
-                    [ Html.li []
-                        [ Html.a
-                            [ Events.onClick Restart
-                            ]
-                            [ Html.text "Restart" ]
-                        ]
-                    ]
+                    [ Html.text "🔄 Restart" ]
                 ]
             ]
-        , Html.div [ Attr.class "h-1/3 grid place-items-center" ] <|
+        , Html.div [ Attr.class "flex-1 flex items-center justify-center p-4 md:p-8" ] <|
             case model of
                 Idle ->
-                    [ Html.button
-                        [ Attr.class "btn btn-primary btn-lg"
-                        , Events.onClick Start
+                    [ Html.div [ Attr.class "text-center space-y-6 animate-in fade-in zoom-in duration-700" ]
+                        [ Html.h1 [ Attr.class "text-4xl md:text-6xl font-bold mb-4" ]
+                            [ Html.text "Flag Quiz" ]
+                        , Html.p [ Attr.class "text-lg md:text-xl text-base-content/70 mb-8" ]
+                            [ Html.text "Can you guess all the countries?" ]
+                        , Html.button
+                            [ Attr.class "btn btn-primary btn-lg btn-wide text-lg"
+                            , Events.onClick Start
+                            ]
+                            [ Html.text "🚀 Start Game!" ]
                         ]
-                        [ Html.text "Start!" ]
                     ]
 
-                Playing ({ currentCountry, guess } as gameState) tray ->
+                Playing ({ currentCountry, guessedCountries, score, guess } as gameState) tray ->
                     [ Html.div
-                        [ Attr.class "toast toast-top toast-center" ]
+                        [ Attr.class "toast toast-top toast-center z-50" ]
                         [ Toast.render viewToast tray (Toast.config ToastMsg) ]
-                    , Html.div [ Attr.class "flex flex-col" ]
-                        [ Html.div
-                            [ Attr.class "card w-96 bg-base-100 card-md shadow-sm" ]
+                    , Html.div [ Attr.class "w-full max-w-4xl mx-auto flex flex-col gap-4 md:gap-6" ]
+                        [ -- Input field first (sticky on mobile)
+                          Html.div [ Attr.class "sticky top-16 z-40 bg-base-200 pb-2 md:relative md:top-0 md:order-2" ]
+                            [ Html.input
+                                [ Attr.type_ "text"
+                                , Attr.placeholder "Type country name..."
+                                , Attr.class "input input-bordered input-lg w-full text-lg md:text-xl focus:input-primary shadow-lg"
+                                , Attr.attribute "autocomplete" "off"
+                                , Attr.attribute "autocapitalize" "words"
+                                , Events.onInput <| \s -> OnInput { gameState | guess = s }
+                                , Attr.value guess
+                                , Events.onEnter <| CheckAnswer gameState
+                                ]
+                                []
+                            ]
+                        , Html.div
+                            [ Attr.class "card bg-base-100 shadow-xl md:order-1" ]
                             [ Html.div
-                                [ Attr.class "card-body flex items-center justify-center" ]
+                                [ Attr.class "card-body flex items-center justify-center py-8 md:py-16" ]
                                 [ Html.h2
-                                    [ Attr.class "card-title text-9xl text-center" ]
+                                    [ Attr.class "text-7xl md:text-9xl text-center select-none" ]
                                     [ Html.text <| currentCountry.flag ]
                                 ]
                             ]
-                        , Html.input
-                            [ Attr.type_ "text"
-                            , Attr.placeholder "Country name..."
-                            , Attr.class "input w-full"
-                            , Events.onInput <| \s -> OnInput { gameState | guess = s }
-                            , Attr.value guess
-                            , Events.onEnter <| CheckAnswer gameState
+                        , Html.div [ Attr.class "stats stats-vertical sm:stats-horizontal bg-base-100 shadow-xl w-full md:order-3" ]
+                            [ Html.div [ Attr.class "stat place-items-center py-2" ]
+                                [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Correct" ]
+                                , Html.div [ Attr.class "stat-value text-success text-xl md:text-4xl transition-all duration-300" ] 
+                                    [ Html.text <| "✅ " ++ String.fromInt score.correct ]
+                                ]
+                            , Html.div [ Attr.class "stat place-items-center py-2" ]
+                                [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Incorrect" ]
+                                , Html.div [ Attr.class "stat-value text-error text-xl md:text-4xl transition-all duration-300" ] 
+                                    [ Html.text <| "❌ " ++ String.fromInt score.failed ]
+                                ]
+                            , Html.div [ Attr.class "stat place-items-center py-2" ]
+                                [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Streak" ]
+                                , Html.div 
+                                    [ Attr.class <|
+                                        "stat-value text-primary text-xl md:text-4xl transition-all duration-300 "
+                                        ++ (if score.streak > 0 then "animate-pulse scale-110" else "")
+                                    ] 
+                                    [ Html.text <| 
+                                        (if score.streak > 2 then "🔥 " else "") 
+                                        ++ String.fromInt score.streak 
+                                    ]
+                                ]
+                            , Html.div [ Attr.class "stat place-items-center py-2" ]
+                                [ Html.div [ Attr.class "stat-title text-xs" ] [ Html.text "Best" ]
+                                , Html.div 
+                                    [ Attr.class "stat-value text-secondary text-xl md:text-4xl transition-all duration-500" ] 
+                                    [ Html.text <| 
+                                        (if score.maxStreak > 2 then "🔥 " else "") 
+                                        ++ String.fromInt score.maxStreak 
+                                    ]
+                                ]
                             ]
-                            []
+                        , if List.isEmpty guessedCountries then
+                            Html.text ""
+                          else
+                            Html.div [ Attr.class "card bg-base-100 shadow-lg animate-in fade-in duration-500 md:order-4" ]
+                                [ Html.div [ Attr.class "card-body p-4" ]
+                                    [ Html.h3 [ Attr.class "text-sm font-semibold text-center opacity-60 mb-2" ]
+                                        [ Html.text <| "Guessed: " ++ String.fromInt (List.length guessedCountries) ]
+                                    , Html.div [ Attr.class "flex flex-wrap gap-2 justify-center" ]
+                                        (List.map
+                                            (\country ->
+                                                Html.span
+                                                    [ Attr.class "text-3xl md:text-4xl line-through opacity-50 hover:opacity-80 transition-opacity duration-200 animate-in zoom-in duration-300"
+                                                    , Attr.title country.name
+                                                    ]
+                                                    [ Html.text country.flag ]
+                                            )
+                                            (List.reverse guessedCountries)
+                                        )
+                                    ]
+                                ]
                         ]
                     ]
 
-                Finished { correct, failed } ->
+                Finished { correct, failed, maxStreak } ->
                     [ Html.div
-                        [ Attr.class "card w-96 bg-base-100 card-md shadow-sm"
+                        [ Attr.class "card w-full max-w-md bg-base-100 shadow-2xl animate-in zoom-in duration-500"
                         ]
                         [ Html.div
-                            [ Attr.class "card-body flex items-center justify-center"
+                            [ Attr.class "card-body p-6 md:p-8"
                             ]
                             [ Html.h2
-                                [ Attr.class "card-title text-3xl text-center"
+                                [ Attr.class "card-title text-2xl md:text-4xl text-center justify-center mb-6 animate-in slide-in-from-top duration-700"
                                 ]
-                                [ Html.text "Congratulations! 🎉🎉🎉" ]
-                            , Html.p
-                                [ Attr.class "text-lime-500 text-xl text-center" ]
-                                [ Html.text <| "Correct answers: " ++ String.fromInt correct ]
-                            , Html.p
-                                [ Attr.class "text-red-500 text-xl text-center" ]
-                                [ Html.text <| "Incorrect answers: " ++ String.fromInt failed ]
+                                [ Html.text "Congratulations! 🎉" ]
+                            , Html.div [ Attr.class "stats stats-vertical shadow w-full mb-4" ]
+                                [ Html.div [ Attr.class "stat animate-in slide-in-from-left duration-500 delay-200" ]
+                                    [ Html.div [ Attr.class "stat-figure text-success" ]
+                                        [ Html.div [ Attr.class "text-4xl" ] [ Html.text "✅" ] ]
+                                    , Html.div [ Attr.class "stat-title" ] [ Html.text "Correct" ]
+                                    , Html.div [ Attr.class "stat-value text-success" ] [ Html.text <| String.fromInt correct ]
+                                    ]
+                                , Html.div [ Attr.class "stat animate-in slide-in-from-right duration-500 delay-300" ]
+                                    [ Html.div [ Attr.class "stat-figure text-error" ]
+                                        [ Html.div [ Attr.class "text-4xl" ] [ Html.text "❌" ] ]
+                                    , Html.div [ Attr.class "stat-title" ] [ Html.text "Incorrect" ]
+                                    , Html.div [ Attr.class "stat-value text-error" ] [ Html.text <| String.fromInt failed ]
+                                    ]
+                                , Html.div [ Attr.class "stat animate-in slide-in-from-bottom duration-500 delay-400" ]
+                                    [ Html.div [ Attr.class "stat-figure text-warning" ]
+                                        [ Html.div [ Attr.class "text-4xl animate-pulse" ] [ Html.text "🔥" ] ]
+                                    , Html.div [ Attr.class "stat-title" ] [ Html.text "Best Streak" ]
+                                    , Html.div [ Attr.class "stat-value text-warning" ] [ Html.text <| String.fromInt maxStreak ]
+                                    ]
+                                ]
+                            , Html.div [ Attr.class "card-actions justify-center mt-4" ]
+                                [ Html.button
+                                    [ Attr.class "btn btn-primary btn-wide"
+                                    , Events.onClick Restart
+                                    ]
+                                    [ Html.text "🚀 Play Again" ]
+                                ]
                             ]
                         ]
                     ]
