@@ -302,7 +302,8 @@ view model =
                                 [ Attr.type_ "text"
                                 , Attr.placeholder "Type country name..."
                                 , Attr.class "input input-bordered input-lg w-full text-lg md:text-xl focus:input-primary shadow-lg"
-                                , Attr.attribute "autocomplete" "off"
+                                , Attr.autocomplete False
+                                , Attr.autofocus True
                                 , Attr.attribute "autocapitalize" "words"
                                 , Events.onInput <| \s -> OnInput { gameState | guess = s }
                                 , Attr.value guess
