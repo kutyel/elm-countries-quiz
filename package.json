@@ -7,7 +7,8 @@
     "build": "parcel build index.html",
     "postinstall": "elm-tooling install",
     "test": "elm-test-rs",
-    "review": "elm-review"
+    "review": "elm-review",
+    "format": "elm-format --yes ./src/*.elm"
   },
   "keywords": [],
   "author": "Flavio Corpa <flaviocorpa@gmail.com>",
