@@ -137,7 +137,7 @@ update msg model =
             let
                 answerWasCorrect : Bool
                 answerWasCorrect =
-                    (not <| String.isEmpty guess)
+                    (String.length (String.trim guess) >= 3)
                         && String.contains
                             (String.toLower <| String.trim guess)
                             (String.toLower currentCountry.name)
