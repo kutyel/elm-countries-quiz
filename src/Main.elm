@@ -98,7 +98,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         OnInput gameState ->
-            ( Playing gameState emptyTray, Cmd.none )
+            case model of
+                Playing _ tray ->
+                    ( Playing gameState tray, Cmd.none )
+
+                _ ->
+                    ( Playing gameState emptyTray, Cmd.none )
 
         Start mode ->
             let
@@ -179,10 +184,10 @@ update msg model =
             ( case remainingCountries of
                 c :: cs ->
                     if answerWasCorrect then
-                        Playing (GameState c cs (currentCountry :: guessedCountries) updatedGameScore "") emptyTray
+                        Playing (GameState c cs (currentCountry :: guessedCountries) updatedGameScore "") tray
 
                     else
-                        Playing (GameState c cs guessedCountries updatedGameScore "") emptyTray
+                        Playing (GameState c cs guessedCountries updatedGameScore "") tray
 
                 [] ->
                     -- we run out of countries, the game is finished!
@@ -202,7 +207,7 @@ viewToast attributes toast =
             Red correct ->
                 [ Html.div
                     [ Attr.attribute "role" "alert"
-                    , Attr.class "alert alert-error animate-in slide-in-from-top duration-500 animate-out slide-out-to-top"
+                    , Attr.class "alert alert-error animate-in slide-in-from-top duration-500 animate-out slide-out-to-top mb-2.5"
                     ]
                     [ Svg.svg
                         [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current animate-pulse"
@@ -225,7 +230,7 @@ viewToast attributes toast =
             Green ->
                 [ Html.div
                     [ Attr.attribute "role" "alert"
-                    , Attr.class "alert alert-success animate-in slide-in-from-top duration-500 animate-out slide-out-to-top"
+                    , Attr.class "alert alert-success animate-in slide-in-from-top duration-500 animate-out slide-out-to-top  mb-2.5"
                     ]
                     [ Svg.svg
                         [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current animate-bounce"
