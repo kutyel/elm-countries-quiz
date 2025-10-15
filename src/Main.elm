@@ -108,7 +108,7 @@ update msg model =
                 Playing state oldTray ->
                     let
                         ( tray, tmesg ) =
-                            Toast.add oldTray <| Toast.expireIn 1000 content
+                            Toast.add oldTray <| Toast.expireIn 2000 content
                     in
                     ( Playing state tray, Cmd.map ToastMsg tmesg )
 
