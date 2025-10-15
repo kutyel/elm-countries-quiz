@@ -55,7 +55,7 @@ type GameMode
 type Model
     = Idle
     | Playing GameState (Toast.Tray Toast)
-    | Finished Score
+    | Finished Score (Toast.Tray Toast)
 
 
 init : () -> ( Model, Cmd msg )
@@ -69,8 +69,29 @@ type Msg
     | ToastMsg Toast.Msg
     | AddToast Toast
     | OnInput GameState
-    | CheckAnswer GameState
+    | CheckAnswer GameState (Toast.Tray Toast)
     | RandomCountry Score (List Country)
+
+
+addToTray :
+    (Toast.Tray Toast -> m)
+    -> Toast.Tray Toast
+    -> Toast
+    -> ( m, Cmd Msg )
+addToTray stateFn oldTray content =
+    Toast.expireIn 2000 content
+        |> Toast.add oldTray
+        |> (\( tray, cmd ) -> ( stateFn tray, Cmd.map ToastMsg cmd ))
+
+
+updateTray :
+    (Toast.Tray content -> m)
+    -> Toast.Msg
+    -> Toast.Tray content
+    -> ( m, Cmd Msg )
+updateTray stateFn msg oldTray =
+    Toast.update msg oldTray
+        |> (\( tray, cmd ) -> ( stateFn tray, Cmd.map ToastMsg cmd ))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -106,11 +127,10 @@ update msg model =
         AddToast content ->
             case model of
                 Playing state oldTray ->
-                    let
-                        ( tray, tmesg ) =
-                            Toast.add oldTray <| Toast.expireIn 2000 content
-                    in
-                    ( Playing state tray, Cmd.map ToastMsg tmesg )
+                    addToTray (Playing state) oldTray content
+
+                Finished score oldTray ->
+                    addToTray (Finished score) oldTray content
 
                 _ ->
                     ( model, Cmd.none )
@@ -118,11 +138,10 @@ update msg model =
         ToastMsg tmsg ->
             case model of
                 Playing state oldTray ->
-                    let
-                        ( tray, newTmesg ) =
-                            Toast.update tmsg oldTray
-                    in
-                    ( Playing state tray, Cmd.map ToastMsg newTmesg )
+                    updateTray (Playing state) tmsg oldTray
+
+                Finished score oldTray ->
+                    updateTray (Finished score) tmsg oldTray
 
                 _ ->
                     ( model, Cmd.none )
@@ -131,9 +150,9 @@ update msg model =
             ( Playing (GameState country remainingCountries [] score "") emptyTray, Cmd.none )
 
         RandomCountry state [] ->
-            ( Finished state, Cmd.none )
+            ( Finished state emptyTray, Cmd.none )
 
-        CheckAnswer { currentCountry, remainingCountries, guessedCountries, score, guess } ->
+        CheckAnswer { currentCountry, remainingCountries, guessedCountries, score, guess } tray ->
             let
                 answerWasCorrect : Bool
                 answerWasCorrect =
@@ -167,7 +186,7 @@ update msg model =
 
                 [] ->
                     -- we run out of countries, the game is finished!
-                    Finished updatedGameScore
+                    Finished updatedGameScore tray
             , if answerWasCorrect then
                 Task.perform identity <| Task.succeed (AddToast Green)
 
@@ -239,10 +258,10 @@ isPlaying model =
 
 view : Model -> Html Msg
 view model =
-    Html.div [ Attr.class "min-h-screen flex flex-col bg-base-200" ]
+    Html.div
+        [ Attr.class "min-h-screen flex flex-col bg-base-200" ]
         [ Html.div
-            [ Attr.class "navbar bg-base-100 shadow-md sticky top-0 z-50"
-            ]
+            [ Attr.class "navbar bg-base-100 shadow-md sticky top-0 z-50" ]
             [ Html.div
                 [ Attr.class "flex-1" ]
                 [ Html.a
@@ -307,7 +326,7 @@ view model =
                                 , Attr.attribute "autocapitalize" "words"
                                 , Events.onInput <| \s -> OnInput { gameState | guess = s }
                                 , Attr.value guess
-                                , Events.onEnter <| CheckAnswer gameState
+                                , Events.onEnter <| CheckAnswer gameState tray
                                 ]
                                 []
                             ]
@@ -392,10 +411,12 @@ view model =
                         ]
                     ]
 
-                Finished { correct, failed, maxStreak } ->
+                Finished { correct, failed, maxStreak } tray ->
                     [ Html.div
-                        [ Attr.class "card w-full max-w-md bg-base-100 shadow-2xl animate-in zoom-in duration-500"
-                        ]
+                        [ Attr.class "toast toast-top toast-center z-50" ]
+                        [ Toast.render viewToast tray (Toast.config ToastMsg) ]
+                    , Html.div
+                        [ Attr.class "card w-full max-w-md bg-base-100 shadow-2xl animate-in zoom-in duration-500" ]
                         [ Html.div
                             [ Attr.class "card-body p-6 md:p-8"
                             ]
