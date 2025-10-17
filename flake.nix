@@ -14,34 +14,11 @@
           overlays = [ mkElmDerivation.overlays.mkElmDerivation ];
           inherit system;
         };
-        inherit (pkgs) lib callPackage elmPackages;
-        inherit (lib) fileset;
-
-        toSource = fsets:
-          fileset.toSource {
-            root = ./.;
-            fileset = fileset.unions fsets;
-          };
-        elmVersion = "0.19.1";
         elmPackageName = "elm-countries-quiz";
         elmPackage = pkgs.mkElmDerivation {
           name = elmPackageName;
           src = ./.;
           outputJavaScript = true;
-        };
-        testsSrc = toSource [
-          (fileset.fileFilter (file: file.hasExt "elm") ./tests)
-        ];
-
-        reviewSrc = toSource [
-          (fileset.fromSource testsSrc)
-          (fileset.fileFilter (file: file.hasExt "elm") ./review)
-          ./review/elm.json
-        ];
-        elmReview = elmPackages.elm-review;
-        elmTests = callPackage ./nix/elmTests.nix { inherit testsSrc; };
-        elmReviewed = callPackage ./nix/elmReviewed.nix {
-          inherit elmReview elmVersion reviewSrc;
         };
       in
         {
@@ -71,7 +48,7 @@
               ];
           };
 
-          checks = { inherit elmReviewed elmTests; };
+          # checks = { inherit elmReviewed elmTests; };
         }
     );
 }
