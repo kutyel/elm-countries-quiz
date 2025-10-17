@@ -1,36 +1,50 @@
 {
   description = "elm-countries-quiz";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    mkElmDerivation.url = "github:jeslie0/mkElmDerivation";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, mkElmDerivation, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            # Elm toolchain
-            elmPackages.elm
-            elmPackages.elm-format
-            elmPackages.elm-test
-            elmPackages.elm-review
-            
-            # Node.js for npm dependencies
-            nodejs_20
-            nodePackages.pnpm
-          ];
-
-          shellHook = ''
-            elm-review
-            echo "Elm development environment loaded"
-            echo "Run 'pnpm install' to install JavaScript dependencies"
-            echo "Run 'pnpm start' to start the development server"
-          '';
+        pkgs = import nixpkgs {
+          overlays = [ mkElmDerivation.overlays.mkElmDerivation ];
+          inherit system;
         };
-      }
+        elmPackageName = "elm-countries-quiz";
+        elmPackage = pkgs.mkElmDerivation {
+          name = elmPackageName;
+          src = ./.;
+          outputJavaScript = true;
+        };
+      in
+        {
+          packages.default = pkgs.stdenv.mkDerivation {
+            pname = elmPackageName;
+            version = "0.1.0";
+            src = ./public;
+            buildInputs = [ elmPackage ];
+            buildPhase = ''
+              cp ${elmPackage}/Main.min.js main.min.js
+            '';
+            installPhase = ''
+              mkdir $out
+              cp * $out
+            '';
+          };
+
+          devShell = pkgs.mkShell {
+            inputsFrom = [ elmPackage ];
+            packages = with pkgs;
+              [ elmPackages.elm-language-server
+                elmPackages.elm-format
+                elmPackages.elm-test
+                elmPackages.elm-review
+              ];
+          };
+        }
     );
 }
