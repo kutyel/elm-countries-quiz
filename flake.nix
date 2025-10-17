@@ -25,7 +25,8 @@
           packages.default = pkgs.stdenv.mkDerivation {
             pname = elmPackageName;
             version = "0.1.0";
-            src = ./public;
+            src = ./.;
+            elmJson = ./elm.json; # defaults to ${src}/elm.json
             buildInputs = [ elmPackage ];
             buildPhase = ''
               cp ${elmPackage}/Main.min.js main.min.js
