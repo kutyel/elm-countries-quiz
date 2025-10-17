@@ -32,8 +32,9 @@
               cp ${elmPackage}/Main.min.js main.min.js
             '';
             installPhase = ''
-              mkdir $out
-              cp * $out
+              mkdir -p $out
+              cp index.html $out/
+              cp main.min.js $out/
             '';
           };
 
