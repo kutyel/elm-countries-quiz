@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "elm-review-tool-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1756066304,
+        "narHash": "sha256-kar5wumf2ZajmgUk86hNuJegOTlvVTTrpTgg/3XRd1M=",
+        "owner": "jfmengels",
+        "repo": "node-elm-review",
+        "rev": "e348515539518630122be6924c7cae94ffb24418",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jfmengels",
+        "repo": "node-elm-review",
+        "type": "github"
+      }
+    },
     "elm-spa": {
       "inputs": {
         "nixpkgs": [
@@ -66,49 +82,36 @@
       "inputs": {
         "elm-spa": "elm-spa",
         "elm-watch": "elm-watch",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
-        "lastModified": 1760233122,
-        "narHash": "sha256-kEkuoDF4LENy6uqMa8gX6UG9O+ib/9H2N7RbN2boDvk=",
-        "owner": "jeslie0",
+        "lastModified": 1760833484,
+        "narHash": "sha256-VugMk/myhGQE71hrCugupr+FIuIL6NCdJeken9mzGoQ=",
+        "owner": "r-k-b",
         "repo": "mkElmDerivation",
-        "rev": "3a0fb06962edda162198c8b400064e613a32a289",
+        "rev": "179335e229c00860eeb8f424ba5b017d62adcdf3",
         "type": "github"
       },
       "original": {
-        "owner": "jeslie0",
+        "owner": "r-k-b",
+        "ref": "support-elm-review",
         "repo": "mkElmDerivation",
         "type": "github"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1696757521,
-        "narHash": "sha256-cfgtLNCBLFx2qOzRLI6DHfqTdfWI+UbvsKYa3b3fvaA=",
-        "owner": "nixos",
+        "lastModified": 1761114652,
+        "narHash": "sha256-f/QCJM/YhrV/lavyCVz8iU3rlZun6d+dAiC3H+CDle4=",
+        "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2646b294a146df2781b1ca49092450e8a32814e1",
+        "rev": "01f116e4df6a15f4ccdffb1bcd41096869fb385c",
         "type": "github"
       },
       "original": {
-        "owner": "nixos",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1760524057,
-        "narHash": "sha256-EVAqOteLBFmd7pKkb0+FIUyzTF61VKi7YmvP1tw4nEw=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "544961dfcce86422ba200ed9a0b00dd4b1486ec5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
+        "owner": "NixOS",
         "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
@@ -154,9 +157,10 @@
     },
     "root": {
       "inputs": {
+        "elm-review-tool-src": "elm-review-tool-src",
         "flake-utils": "flake-utils",
         "mkElmDerivation": "mkElmDerivation",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       }
     },
     "systems": {
