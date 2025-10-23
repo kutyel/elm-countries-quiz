@@ -6,6 +6,7 @@ import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Events.Extra as Events
+import List.Zipper as Zipper exposing (Zipper)
 import Random exposing (Generator)
 import Random.List exposing (shuffle)
 import Svg
@@ -38,9 +39,7 @@ type alias Score =
 
 
 type alias GameState =
-    { currentCountry : Country
-    , remainingCountries : List Country
-    , guessedCountries : List Country
+    { countries : Zipper Country
     , score : Score
     , guess : String
     }
@@ -151,20 +150,22 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        RandomCountry score (country :: remainingCountries) ->
-            ( Playing (GameState country remainingCountries [] score "") emptyTray, Cmd.none )
+        RandomCountry score countries ->
+            case Zipper.fromList countries of
+                Just zipper ->
+                    ( Playing (GameState zipper score "") emptyTray, Cmd.none )
 
-        RandomCountry state [] ->
-            ( Finished state emptyTray, Cmd.none )
+                Nothing ->
+                    ( Finished score emptyTray, Cmd.none )
 
-        CheckAnswer { currentCountry, remainingCountries, guessedCountries, score, guess } tray ->
+        CheckAnswer { countries, score, guess } tray ->
             let
                 answerWasCorrect : Bool
                 answerWasCorrect =
                     (String.length (String.trim guess) >= 3)
                         && String.contains
                             (String.toLower <| String.trim guess)
-                            (String.toLower currentCountry.name)
+                            (String.toLower (Zipper.current countries).name)
 
                 updatedGameScore : Score
                 updatedGameScore =
@@ -181,22 +182,18 @@ update msg model =
                             , streak = 0
                         }
             in
-            ( case remainingCountries of
-                c :: cs ->
-                    if answerWasCorrect then
-                        Playing (GameState c cs (currentCountry :: guessedCountries) updatedGameScore "") tray
+            ( case Zipper.next countries of
+                Just remainingCountries ->
+                    Playing (GameState remainingCountries updatedGameScore "") tray
 
-                    else
-                        Playing (GameState c cs guessedCountries updatedGameScore "") tray
-
-                [] ->
-                    -- we run out of countries, the game is finished!
+                Nothing ->
+                    -- If there is no `next` country, the game is finished!
                     Finished updatedGameScore tray
             , if answerWasCorrect then
                 Task.perform identity <| Task.succeed (AddToast Green)
 
               else
-                Task.perform identity <| Task.succeed (AddToast <| Red currentCountry.name)
+                Task.perform identity <| Task.succeed (AddToast <| Red (Zipper.current countries).name)
             )
 
 
@@ -208,6 +205,7 @@ viewToast attributes toast =
                 [ Html.div
                     [ Attr.attribute "role" "alert"
                     , Attr.class "alert alert-error animate-in slide-in-from-top duration-500 animate-out slide-out-to-top mb-2.5"
+                    , Events.onClick (ToastMsg <| Toast.exit toast.id)
                     ]
                     [ Svg.svg
                         [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current animate-pulse"
@@ -231,6 +229,7 @@ viewToast attributes toast =
                 [ Html.div
                     [ Attr.attribute "role" "alert"
                     , Attr.class "alert alert-success animate-in slide-in-from-top duration-500 animate-out slide-out-to-top  mb-2.5"
+                    , Events.onClick (ToastMsg <| Toast.exit toast.id)
                     ]
                     [ Svg.svg
                         [ SvgAttr.class "h-6 w-6 shrink-0 stroke-current animate-bounce"
@@ -316,7 +315,7 @@ view model =
                         ]
                     ]
 
-                Playing ({ currentCountry, guessedCountries, score, guess } as gameState) tray ->
+                Playing ({ countries, score, guess } as gameState) tray ->
                     [ Html.div
                         [ Attr.class "toast toast-top toast-center z-50" ]
                         [ Toast.render viewToast tray (Toast.config ToastMsg) ]
@@ -341,7 +340,7 @@ view model =
                                 [ Attr.class "card-body flex items-center justify-center py-8 md:py-16" ]
                                 [ Html.h2
                                     [ Attr.class "text-7xl md:text-9xl text-center select-none" ]
-                                    [ Html.text <| currentCountry.flag ]
+                                    [ Html.text <| (Zipper.current countries).flag ]
                                 ]
                             ]
                         , Html.div [ Attr.class "stats stats-vertical sm:stats-horizontal bg-base-100 shadow-xl w-full md:order-3" ]
@@ -392,14 +391,14 @@ view model =
                                     ]
                                 ]
                             ]
-                        , if List.isEmpty guessedCountries then
+                        , if List.isEmpty (Zipper.before countries) then
                             Html.text ""
 
                           else
                             Html.div [ Attr.class "card bg-base-100 shadow-lg animate-in fade-in duration-500 md:order-4" ]
                                 [ Html.div [ Attr.class "card-body p-4" ]
                                     [ Html.h3 [ Attr.class "text-sm font-semibold text-center opacity-60 mb-2" ]
-                                        [ Html.text <| "Guessed: " ++ String.fromInt (List.length guessedCountries) ]
+                                        [ Html.text <| "Guessed: " ++ String.fromInt (List.length (Zipper.before countries)) ]
                                     , Html.div [ Attr.class "flex flex-wrap gap-2 justify-center" ]
                                         (List.map
                                             (\country ->
@@ -409,7 +408,7 @@ view model =
                                                     ]
                                                     [ Html.text country.flag ]
                                             )
-                                            (List.reverse guessedCountries)
+                                            (List.reverse (Zipper.before countries))
                                         )
                                     ]
                                 ]
