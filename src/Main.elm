@@ -166,13 +166,21 @@ update msg model =
                             (String.toLower <| String.trim guess)
                             (String.toLower currentCountry.name)
 
+                newStreak : Int
+                newStreak =
+                    if answerWasCorrect then
+                        score.streak + 1
+
+                    else
+                        0
+
                 updatedGameScore : Score
                 updatedGameScore =
                     if answerWasCorrect then
                         { score
                             | correct = score.correct + 1
-                            , streak = score.streak + 1
-                            , maxStreak = max (score.streak + 1) score.maxStreak
+                            , streak = newStreak
+                            , maxStreak = max newStreak score.maxStreak
                         }
 
                     else
