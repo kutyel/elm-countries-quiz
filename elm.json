@@ -14,7 +14,8 @@
             "elm-community/html-extra": "3.4.0",
             "elm-community/random-extra": "3.2.0",
             "emilianobovetti/elm-toast": "2.0.0",
-            "supermario/elm-countries": "1.1.1"
+            "supermario/elm-countries": "1.1.1",
+            "wernerdegroot/listzipper": "4.0.0"
         },
         "indirect": {
             "elm/json": "1.1.3",
