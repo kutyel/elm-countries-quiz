@@ -11,7 +11,6 @@ import Random exposing (Generator)
 import Random.List exposing (shuffle)
 import Svg
 import Svg.Attributes as SvgAttr
-import Task
 import Toast
 
 
@@ -66,21 +65,9 @@ type Msg
     = Start GameMode
     | Restart
     | ToastMsg Toast.Msg
-    | AddToast Toast
     | OnInput GameState
     | CheckAnswer GameState (Toast.Tray Toast)
     | RandomCountry Score (List Country)
-
-
-addToTray :
-    (Toast.Tray Toast -> m)
-    -> Toast.Tray Toast
-    -> Toast
-    -> ( m, Cmd Msg )
-addToTray stateFn oldTray content =
-    Toast.expireIn 2000 content
-        |> Toast.add oldTray
-        |> (\( tray, cmd ) -> ( stateFn tray, Cmd.map ToastMsg cmd ))
 
 
 updateTray :
@@ -128,17 +115,6 @@ update msg model =
         Restart ->
             ( Idle, Cmd.none )
 
-        AddToast content ->
-            case model of
-                Playing state oldTray ->
-                    addToTray (Playing state) oldTray content
-
-                Finished score oldTray ->
-                    addToTray (Finished score) oldTray content
-
-                _ ->
-                    ( model, Cmd.none )
-
         ToastMsg tmsg ->
             case model of
                 Playing state oldTray ->
@@ -181,19 +157,27 @@ update msg model =
                             | failed = score.failed + 1
                             , streak = 0
                         }
+
+                toastContent : Toast
+                toastContent =
+                    if answerWasCorrect then
+                        Green
+
+                    else
+                        Red (Zipper.current countries).name
+
+                ( newTray, toastCmd ) =
+                    Toast.expireIn 2000 toastContent
+                        |> Toast.add tray
             in
             ( case Zipper.next countries of
                 Just remainingCountries ->
-                    Playing (GameState remainingCountries updatedGameScore "") tray
+                    Playing (GameState remainingCountries updatedGameScore "") newTray
 
                 Nothing ->
                     -- If there is no `next` country, the game is finished!
-                    Finished updatedGameScore tray
-            , if answerWasCorrect then
-                Task.perform identity <| Task.succeed (AddToast Green)
-
-              else
-                Task.perform identity <| Task.succeed (AddToast <| Red (Zipper.current countries).name)
+                    Finished updatedGameScore newTray
+            , Cmd.map ToastMsg toastCmd
             )
 
 
