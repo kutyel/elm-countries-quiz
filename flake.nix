@@ -50,17 +50,25 @@
               elm-test-rs "$PROJECT_ROOT"/tests/*.elm
             }
 
-            clean () {
+            c () {
               rm -rf "$PROJECT_ROOT"/{.parcel-cache,dist,elm-stuff,node_modules}
+            }
+
+            s () {
+              pnpm start
             }
 
             pnpm install --silent
 
             echo "Elm development environment loaded"
             echo "All your dependencies have been installed"
+            echo ""
             echo "Type 'f' to run elm-format"
             echo "Type 'r' to run elm-review"
             echo "Type 't' to run elm-test-rs"
+            echo "Type 'c' to remove build artifacts"
+            echo "Type 's' to start the development server"
+            echo ""
           '';
         };
 
