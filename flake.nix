@@ -12,11 +12,16 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         inherit (elm2nix.lib.elm2nix pkgs)
+          buildElmApplication
           generateRegistryDat
           prepareElmHomeScript;
 
         app = pkgs.callPackage ./nix/app.nix {
           inherit generateRegistryDat prepareElmHomeScript;
+        };
+
+        elm = pkgs.callPackage ./nix/elm.nix {
+          inherit buildElmApplication;
         };
 
         serve = pkgs.callPackage ./nix/serve.nix {};
@@ -46,7 +51,11 @@
             export PS1="($name)\n$PS1"
 
             f () {
-              elm-format "$PROJECT_ROOT"/src --yes
+              elm-format                   \
+                "$PROJECT_ROOT"/src        \
+                "$PROJECT_ROOT"/review/src \
+                "$PROJECT_ROOT"/tests      \
+                --yes
             }
 
             r () {
@@ -80,7 +89,7 @@
         };
 
         packages = {
-          inherit app;
+          inherit app elm;
           default = app;
         };
 
