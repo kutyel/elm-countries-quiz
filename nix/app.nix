@@ -1,4 +1,5 @@
 { fetchPnpmDeps
+, lib
 , nodejs
 , pnpm
 , pnpmConfigHook
@@ -9,18 +10,34 @@
 }:
 
 let
+  fs = lib.fileset;
+
   elmLock = ../elm.lock;
   registryDat = generateRegistryDat { inherit elmLock; };
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "elm-countries-quiz";
   version = "1.0.0";
-  src = ../.;
+
+  src = fs.toSource {
+    root = ../.;
+    fileset = fs.unions [
+      ../src
+      ../.postcssrc
+      ../elm.json
+      ../index.html
+      ../package.json
+      ../pnpm-lock.yaml
+      ../tailwind.config.js
+    ];
+  };
+
   nativeBuildInputs = [
     nodejs
     pnpmConfigHook
     pnpm
   ];
+
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
     fetcherVersion = 1;
