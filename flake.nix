@@ -18,6 +18,13 @@
         app = pkgs.callPackage ./nix/app.nix {
           inherit generateRegistryDat prepareElmHomeScript;
         };
+
+        serve = pkgs.callPackage ./nix/serve.nix {};
+
+        mkApp = drv: {
+          type = "app";
+          program = "${drv}";
+        };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -75,6 +82,11 @@
         packages = {
           inherit app;
           default = app;
+        };
+
+        apps = {
+          default = self.apps.${system}.app;
+          app = mkApp (serve { root = app; });
         };
       }
     );
