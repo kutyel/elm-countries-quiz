@@ -1,0 +1,98 @@
+[
+    {
+        "author": "elm",
+        "package": "browser",
+        "version": "1.0.2",
+        "sha256": "0863nw2hhbpm3s03lm1imi5x28wwknzrwg2p79s5mydgvdvgwjf0"
+    },
+    {
+        "author": "elm",
+        "package": "bytes",
+        "version": "1.0.8",
+        "sha256": "0n411j2cyz9m241q6vszfzpq3fraradwal5m0gigp2505mdfpz3x"
+    },
+    {
+        "author": "elm",
+        "package": "core",
+        "version": "1.0.5",
+        "sha256": "0g3xbi8f9k5q45s95nx3jfvzwdf4b2n63a52wr4027d2xjx0pmvl"
+    },
+    {
+        "author": "elm",
+        "package": "html",
+        "version": "1.0.0",
+        "sha256": "15k1679ja57vvlpinpv06znmrxy09lbhzfkzdc89i01qa8c4gb4a"
+    },
+    {
+        "author": "elm",
+        "package": "json",
+        "version": "1.1.3",
+        "sha256": "1hx986yqw1v2bpkrh6brszl8n8awwg1s8zi7v5qg0p1rqwvjlicz"
+    },
+    {
+        "author": "elm",
+        "package": "random",
+        "version": "1.0.0",
+        "sha256": "0z0znkwfs35xiabk6pa9yqwsq03jssgd7jmsj1kk000mikfm7f39"
+    },
+    {
+        "author": "elm",
+        "package": "svg",
+        "version": "1.0.1",
+        "sha256": "1iqsc3p129j56lp1y3z3mfc6x1shvrmx3pkhri2777ylhyw90qvl"
+    },
+    {
+        "author": "elm",
+        "package": "time",
+        "version": "1.0.0",
+        "sha256": "0wqa2vhl1zf8z0j2yd3yjwfhr0dydfns43bbzll3k4rhnjadxr1l"
+    },
+    {
+        "author": "elm",
+        "package": "url",
+        "version": "1.0.0",
+        "sha256": "1f2ij4i7zmijnj2i50qf19lpkr14bhms8dkq029inb5mydi9f8gs"
+    },
+    {
+        "author": "elm",
+        "package": "virtual-dom",
+        "version": "1.0.3",
+        "sha256": "1bjyyws7l0qvgp4ixzaimwriq86ncx5bvrzaksvjx3pv7bmkbx69"
+    },
+    {
+        "author": "elm-community",
+        "package": "html-extra",
+        "version": "3.4.0",
+        "sha256": "1ym2fk5gn7hh3kfivdj7g1p6par7qjyw3hb5q8jhhxlyai4sw1w4"
+    },
+    {
+        "author": "elm-community",
+        "package": "random-extra",
+        "version": "3.2.0",
+        "sha256": "13l48mx4wj7qdxl1shn9ij34izap256vv3k49ncnxpkjb7m1m3xk"
+    },
+    {
+        "author": "elm-explorations",
+        "package": "test",
+        "version": "2.1.0",
+        "sha256": "0a0rvhpvz4krvv4hqn528lpcj01xx0jvp3q53mh1fwxvi2l780nk"
+    },
+    {
+        "author": "emilianobovetti",
+        "package": "elm-toast",
+        "version": "2.0.0",
+        "sha256": "1cdsslsw19xw3a6izc78nqh3ha8kh8gn95zz3fd0agyprlymsa7x"
+    },
+    {
+        "author": "supermario",
+        "package": "elm-countries",
+        "version": "1.1.1",
+        "sha256": "06jlm2xv9zc9q9hzv8lq5qmcbcv3xf43mwh832il5sm4ksalbkj3"
+    },
+    {
+        "author": "wernerdegroot",
+        "package": "listzipper",
+        "version": "4.0.0",
+        "sha256": "1mn73l6h1v586jkzxfx9qw0yhm6vqywrkq5527w5jyxvgyw0x76m"
+    }
+]

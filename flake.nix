@@ -1,14 +1,30 @@
 {
-  outputs = { self, nixpkgs, flake-utils }:
+  inputs = {
+    elm2nix = {
+      url = "github:dwayne/elm2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
+  };
+
+  outputs = { self, nixpkgs, flake-utils, elm2nix }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        inherit (elm2nix.lib.elm2nix pkgs)
+          generateRegistryDat
+          prepareElmHomeScript;
+
+        app = pkgs.callPackage ./nix/app.nix {
+          inherit generateRegistryDat prepareElmHomeScript;
+        };
       in
       {
         devShells.default = pkgs.mkShell {
           name = "elm-countries-quiz";
 
           packages = [
+            elm2nix.packages.${system}.default
             pkgs.elmPackages.elm
             pkgs.elmPackages.elm-format
             pkgs.elmPackages.elm-json
@@ -46,6 +62,11 @@
             echo "Type 'r' to run elm-review"
             echo "Type 't' to run elm-test-rs"
           '';
+        };
+
+        packages = {
+          inherit app;
+          default = app;
         };
       }
     );
