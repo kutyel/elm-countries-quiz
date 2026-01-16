@@ -97,6 +97,10 @@
           default = self.apps.${system}.app;
           app = mkApp (serve { root = app; });
         };
+
+        checks = {
+          inherit app elm;
+        };
       }
     );
 }
