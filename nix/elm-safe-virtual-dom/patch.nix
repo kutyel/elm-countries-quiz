@@ -7,6 +7,10 @@
 , rev
 , hash
 }:
+
+let
+  path = "${toOwner}/${repo}/${version}";
+in
 stdenv.mkDerivation {
   inherit version;
 
@@ -18,9 +22,13 @@ stdenv.mkDerivation {
   };
 
   installPhase = ''
-    root="$out/${toOwner}/${repo}/${version}"
+    root="$out/${path}"
     mkdir -p "$root"
     cp elm.json "$root/elm.json"
     cp -R src "$root/src"
   '';
+
+  passthru = {
+    inherit path;
+  };
 }
