@@ -25,6 +25,12 @@
     },
     {
         "author": "elm",
+        "package": "html",
+        "version": "1.0.1",
+        "sha256": "1m045b6cixyqygll4cjf9d9s3k1lj839kxc3gbid0fpqc4g10i6b"
+    },
+    {
+        "author": "elm",
         "package": "json",
         "version": "1.1.3",
         "sha256": "1hx986yqw1v2bpkrh6brszl8n8awwg1s8zi7v5qg0p1rqwvjlicz"
@@ -80,14 +86,14 @@
     {
         "author": "elm",
         "package": "virtual-dom",
-        "version": "1.0.3",
-        "sha256": "1bjyyws7l0qvgp4ixzaimwriq86ncx5bvrzaksvjx3pv7bmkbx69"
+        "version": "1.0.4",
+        "sha256": "0in60jsh3vcibb0bzgb3rapd0cvkbifhhychx7fpcmzgdlm3ybv4"
     },
     {
         "author": "elm",
         "package": "virtual-dom",
-        "version": "1.0.4",
-        "sha256": "0in60jsh3vcibb0bzgb3rapd0cvkbifhhychx7fpcmzgdlm3ybv4"
+        "version": "1.0.5",
+        "sha256": "16v6h8msm1yin45vwdj8g0wnqs4gjjyknhz2iamrzzbssxvryyqv"
     },
     {
         "author": "elm-community",
@@ -100,12 +106,6 @@
         "package": "random-extra",
         "version": "3.2.0",
         "sha256": "13l48mx4wj7qdxl1shn9ij34izap256vv3k49ncnxpkjb7m1m3xk"
-    },
-    {
-        "author": "elm-explorations",
-        "package": "test",
-        "version": "2.1.0",
-        "sha256": "0a0rvhpvz4krvv4hqn528lpcj01xx0jvp3q53mh1fwxvi2l780nk"
     },
     {
         "author": "elm-explorations",
