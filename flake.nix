@@ -30,6 +30,10 @@
           type = "app";
           program = "${drv}";
         };
+
+        lydellVirtualDom = pkgs.callPackage ./nix/elm-safe-virtual-dom/lydell-virtual-dom.nix {};
+        lydellHtml = pkgs.callPackage ./nix/elm-safe-virtual-dom/lydell-html.nix {};
+        lydellBrowser = pkgs.callPackage ./nix/elm-safe-virtual-dom/lydell-browser.nix {};
       in
       {
         devShells.default = pkgs.mkShell {
@@ -91,6 +95,8 @@
         packages = {
           inherit app elm;
           default = app;
+
+          inherit lydellVirtualDom lydellHtml lydellBrowser;
         };
 
         apps = {
