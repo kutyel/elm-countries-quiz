@@ -9,7 +9,13 @@
     "review": "elm-review",
     "format": "elm-format --yes ./src/*.elm"
   },
-  "keywords": ["elm", "parcel", "tailwindcss", "webgame", "nix"],
+  "keywords": [
+    "elm",
+    "parcel",
+    "tailwindcss",
+    "webgame",
+    "nix"
+  ],
   "author": "Flavio Corpa <flaviocorpa@gmail.com>",
   "license": "MIT",
   "devDependencies": {
@@ -17,7 +23,6 @@
     "@tailwindcss/postcss": "^4.1.14",
     "autoprefixer": "^10.4.21",
     "daisyui": "^5.2.3",
-    "elm-review": "^2.13.4",
     "parcel": "^2.16.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.14",
