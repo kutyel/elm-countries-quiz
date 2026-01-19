@@ -23,9 +23,6 @@ importers:
       elm-review:
         specifier: ^2.13.4
         version: 2.13.4
-      elm-tooling:
-        specifier: ^1.16.0
-        version: 1.16.0
       parcel:
         specifier: ^2.16.0
         version: 2.16.0(@swc/helpers@0.5.17)
@@ -918,10 +915,6 @@ packages:
 
   elm-solve-deps-wasm@2.0.0:
     resolution: {integrity: sha512-11OV8FgB9qsth/F94q2SJjb1MoEgbworSyNM1L+YlxVoaxp7wtWPyA8cNcPEkSoIKG1B8Tqg68ED1P6dVamHSg==}
-
-  elm-tooling@1.16.0:
-    resolution: {integrity: sha512-XlYdWHopiMOyRTwbbsRKuYA9Zf84gqQ2IZooFS4tVEG31UBdRQ8BZvaPYT3XvCbW2l5sW1idBhUNzUkCQ9rTGA==}
-    hasBin: true
 
   elm@0.19.1-6:
     resolution: {integrity: sha512-mKYyierHICPdMx/vhiIacdPmTPnh889gjHOZ75ZAoCxo3lZmSWbGP8HMw78wyctJH0HwvTmeKhlYSWboQNYPeQ==}
@@ -2712,8 +2705,6 @@ snapshots:
       - supports-color
 
   elm-solve-deps-wasm@2.0.0: {}
-
-  elm-tooling@1.16.0: {}
 
   elm@0.19.1-6:
     optionalDependencies:
