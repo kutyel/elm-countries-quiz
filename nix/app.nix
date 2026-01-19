@@ -16,28 +16,7 @@ let
   elmLock = ../elm.lock;
   registryDat = generateRegistryDat { inherit elmLock; };
 
-  #
-  # TODO: Extract installPatchScript so that I can reuse it ./elm.nix.
-  #
-  installPatchScript =
-    { drv # A derivation of a patched package
-    , packagesDir ? ".elm/0.19.1/packages"
-    }:
-    let
-      to = "${packagesDir}/${drv.path}";
-      from = "${drv}/${drv.path}";
-    in
-    ''
-    if [ -d ${to} ]; then
-      rm -r ${to}
-      cp -R ${from} ${to}
-      chmod -R +w ${to}
-    fi
-    '';
-
-  lydellVirtualDom = callPackage ./elm-safe-virtual-dom/lydell-virtual-dom.nix {};
-  lydellHtml = callPackage ./elm-safe-virtual-dom/lydell-html.nix {};
-  lydellBrowser = callPackage ./elm-safe-virtual-dom/lydell-browser.nix {};
+  esvdPatches = callPackage ./elm-safe-virtual-dom/patches.nix {};
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "elm-countries-quiz";
@@ -72,13 +51,7 @@ stdenv.mkDerivation (finalAttrs: {
     runHook preBuild
 
     ${prepareElmHomeScript { inherit elmLock registryDat; }}
-
-    #
-    # Replace elm/virtual-dom, elm/html, and elm/browser with Lydell's versions
-    #
-    ${installPatchScript { drv = lydellVirtualDom; }}
-    ${installPatchScript { drv = lydellHtml; }}
-    ${installPatchScript { drv = lydellBrowser; }}
+    ${esvdPatches}
 
     pnpm build index.html
     cp -R dist/ "$out"/
