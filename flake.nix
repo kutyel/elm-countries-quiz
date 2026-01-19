@@ -31,9 +31,9 @@
           program = "${drv}";
         };
 
-        lydellVirtualDom = pkgs.callPackage ./nix/elm-safe-virtual-dom/lydell-virtual-dom.nix {};
-        lydellHtml = pkgs.callPackage ./nix/elm-safe-virtual-dom/lydell-html.nix {};
-        lydellBrowser = pkgs.callPackage ./nix/elm-safe-virtual-dom/lydell-browser.nix {};
+        lydellVirtualDom = pkgs.callPackage ./nix/lydell-virtual-dom.nix {};
+        lydellHtml = pkgs.callPackage ./nix/lydell-html.nix {};
+        lydellBrowser = pkgs.callPackage ./nix/lydell-browser.nix {};
       in
       {
         devShells.default = pkgs.mkShell {
