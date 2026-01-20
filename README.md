@@ -8,3 +8,10 @@
 - [x] Add `tailwindcss`
 - [x] Add NixCI
 - [x] Deploy to Netlify!
+
+Commands to generate `elm.lock` file:
+
+```sh
+nix develop
+elm2nix lock elm.json review/elm.json review/elm.extra.json
+```
